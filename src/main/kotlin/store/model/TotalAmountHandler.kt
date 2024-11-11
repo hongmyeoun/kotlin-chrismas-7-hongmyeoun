@@ -87,6 +87,7 @@ class TotalAmountHandler(
             totalAmount += purchaseItem.quantity * (promotionItem?.price ?: 0)
             totalPurchasedQuantity += purchaseItem.quantity
             itemsToPromotionCheck.add(purchaseItem)
+            shoppingCart.updatePurchaseItem(purchaseItem, purchaseItem.quantity + freeGoods, freeGoods)
             updateInventory(promotionItem, purchaseItem.quantity)
         } else {
             processFreeGoods(regularItem, promotionItem, purchaseItem, freeGoods, itemsToPromotionCheck, getIntentionOfPromotionFreeGoods)
@@ -111,6 +112,7 @@ class TotalAmountHandler(
             totalAmount += purchaseItem.quantity * (promotionItem?.price ?: 0)
             totalPurchasedQuantity += purchaseItem.quantity
             itemsToPromotionCheck.add(purchaseItem)
+            shoppingCart.updatePurchaseItem(purchaseItem, purchaseItem.quantity, maxFreeGoods)
             updateInventory(promotionItem, remainingPurchaseQuantity)
         } else {
             itemsToRemove.add(purchaseItem)
@@ -137,7 +139,7 @@ class TotalAmountHandler(
             promotionDiscount += freeGoods * (promotionItem?.price ?: 0)
             totalAmount += (purchaseItem.quantity + freeGoods) * (promotionItem?.price ?: 0)
             totalPurchasedQuantity += purchaseItem.quantity + freeGoods
-            shoppingCart.updatePurchaseItem(purchaseItem, purchaseItem.quantity + freeGoods)
+            shoppingCart.updatePurchaseItem(purchaseItem, purchaseItem.quantity + freeGoods, freeGoods)
             itemsToPromotionCheck.add(purchaseItem)
             updateInventory(promotionItem, purchaseItem.quantity + freeGoods)
         } else {

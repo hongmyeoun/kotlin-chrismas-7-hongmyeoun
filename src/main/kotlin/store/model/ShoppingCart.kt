@@ -27,9 +27,10 @@ class ShoppingCart(private val order: String) {
         return formattedItems
     }
 
-    fun updatePurchaseItem(purchaseItem: PurchaseItem, quantity: Int) {
+    fun updatePurchaseItem(purchaseItem: PurchaseItem, quantity: Int, freeGoodsQuantity: Int) {
         items.find { it.name == purchaseItem.name }?.let {
             it.quantity = quantity
+            it.freeGoodsQuantity = freeGoodsQuantity
         }
     }
 }
@@ -37,5 +38,6 @@ class ShoppingCart(private val order: String) {
 data class PurchaseItem(
     val name: String,
     var quantity: Int,
-    var isPromotion: Boolean = false
+    var isPromotion: Boolean = false,
+    var freeGoodsQuantity: Int = 0
 )

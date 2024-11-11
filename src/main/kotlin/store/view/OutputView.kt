@@ -19,12 +19,17 @@ class OutputView {
         println("상품명              수량        금액")
         itemReceipt.forEach { nameQuantityPrice(it) }
         println("=============증     정===============")
+        itemReceipt.forEach { if (it.freeGoodsQuantity > 0) promotionItems(it) }
         println("====================================")
         finalAmount(totalAmount)
     }
 
     private fun nameQuantityPrice(item: ItemReceipt) {
         println("${item.name}              ${item.quantity}        ${item.totalPrice}")
+    }
+
+    private fun promotionItems(item: ItemReceipt) {
+        println("${item.name}        ${item.freeGoodsQuantity}")
     }
 
     private fun finalAmount(totalAmount: TotalAmountReceipt) {

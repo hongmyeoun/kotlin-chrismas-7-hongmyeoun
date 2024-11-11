@@ -51,7 +51,8 @@ class ReceiptMachine {
                 ItemReceipt(
                     name = item.name,
                     quantity = item.quantity,
-                    totalPrice = it.price * item.quantity
+                    totalPrice = it.price * item.quantity,
+                    freeGoodsQuantity = item.freeGoodsQuantity
                 )
             }
         }.toMutableList()
@@ -61,7 +62,8 @@ class ReceiptMachine {
 data class ItemReceipt(
     val name: String,
     val quantity: Int,
-    val totalPrice: Int
+    val totalPrice: Int,
+    var freeGoodsQuantity: Int = 0
 )
 
 data class TotalAmountReceipt(
