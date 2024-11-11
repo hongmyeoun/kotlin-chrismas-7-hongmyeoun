@@ -62,8 +62,8 @@ class TotalAmountHandler(
         getIntentionOfPromotionFreeGoods: (String) -> Boolean,
         getIntentionOfPayRegularPrice: (String, Int) -> Boolean
     ) {
-        val freeGoods = purchaseItem.quantity / promotion.buy
-        val promotableQuantity = freeGoods * (promotion.buy + promotion.get)
+        val freeGoods = if (promotion.buy != 1) purchaseItem.quantity / promotion.buy else 1
+        val promotableQuantity = if (freeGoods != 1) freeGoods * (promotion.buy + promotion.get) else 1
 
         if (promotableQuantity <= (promotionItem?.quantity ?: 0)) {
             handleFullPromotion(regularItem, purchaseItem, promotionItem, promotion, freeGoods, itemsToPromotionCheck, getIntentionOfPromotionFreeGoods)
@@ -87,7 +87,7 @@ class TotalAmountHandler(
             totalAmount += purchaseItem.quantity * (promotionItem?.price ?: 0)
             totalPurchasedQuantity += purchaseItem.quantity
             itemsToPromotionCheck.add(purchaseItem)
-            shoppingCart.updatePurchaseItem(purchaseItem, purchaseItem.quantity + freeGoods, freeGoods)
+            shoppingCart.updatePurchaseItem(purchaseItem, purchaseItem.quantity, freeGoods)
             updateInventory(promotionItem, purchaseItem.quantity)
         } else {
             processFreeGoods(regularItem, promotionItem, purchaseItem, freeGoods, itemsToPromotionCheck, getIntentionOfPromotionFreeGoods)

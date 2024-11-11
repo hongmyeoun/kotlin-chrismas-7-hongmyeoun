@@ -15,7 +15,7 @@ class OutputView {
     }
 
     fun showReceipt(totalAmount: TotalAmountReceipt, itemReceipt: List<ItemReceipt>) {
-        println("==============W 편의점================")
+        println("\n==============W 편의점================")
         println("상품명              수량        금액")
         itemReceipt.forEach { nameQuantityPrice(it) }
         println("=============증    정===============")
