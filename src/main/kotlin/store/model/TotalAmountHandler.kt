@@ -30,6 +30,10 @@ class TotalAmountHandler(
 
             if (promotion != null && promotionManager.checkIsInPromotionDate(promotion)) {
                 processPromotionItem(regularItem, purchaseItem, promotionItem, promotion, itemsToPromotionCheck, itemsToRemove, getIntentionOfPromotionFreeGoods, getIntentionOfPayRegularPrice)
+            } else if (promotion != null && !promotionManager.checkIsInPromotionDate(promotion)) {
+                if (regularItem != null) {
+                    processRegularItem(purchaseItem, regularItem)
+                }
             }
         }
 
