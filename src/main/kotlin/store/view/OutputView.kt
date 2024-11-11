@@ -18,8 +18,7 @@ class OutputView {
         println("\n==============W 편의점================")
         println("상품명              수량        금액")
         itemReceipt.forEach { nameQuantityPrice(it) }
-        println("=============증    정===============")
-        itemReceipt.forEach { if (it.freeGoodsQuantity > 0) promotionItems(it) }
+        promotionItems(itemReceipt)
         println("====================================")
         finalAmount(totalAmount)
     }
@@ -28,7 +27,14 @@ class OutputView {
         println("%-17s %-9d %,6d".format(item.name, item.quantity, item.totalPrice))
     }
 
-    private fun promotionItems(item: ItemReceipt) {
+    private fun promotionItems(itemReceipt: List<ItemReceipt>) {
+        if (itemReceipt.sumOf { it.freeGoodsQuantity } > 0) {
+            println("=============증    정===============")
+            itemReceipt.forEach { if (it.freeGoodsQuantity > 0) printFreeGoods(it) }
+        }
+    }
+
+    private fun printFreeGoods(item: ItemReceipt) {
         println("%-17s %-12d".format(item.name, item.freeGoodsQuantity))
     }
 
