@@ -1,6 +1,7 @@
 package store.controller
 
 import store.model.*
+import store.util.validation.InputValidator
 import store.view.InputView
 import store.view.OutputView
 
@@ -27,7 +28,10 @@ class StoreController(
     private fun greeting() {
         val formattedInventories = inventory.map { it.toFormattedString() }
         outputView.showGreeting(formattedInventories)
-        val itemsInput = inputView.getOrder()
+        val itemsInput = getValidatedInput(
+            inputFunction = { inputView.getOrder() },
+            validationFunction = { InputValidator.itemsValidator(it, inventory) }
+        )
         shoppingCart = ShoppingCart(itemsInput)
         shoppingCart.addItem()
     }
@@ -36,31 +40,62 @@ class StoreController(
         receiptMachine = ReceiptMachine()
         totalAmountHandler = TotalAmountHandler(shoppingCart, promotionManager, inventory, inventoryManager, promotions, receiptMachine)
         totalAmountHandler.getTotalAmount(
-            getIntentionOfPromotionFreeGoods = { name -> inputView.getIntentionOfPromotionFreeGoods(name).stringToBoolean() },
-            getIntentionOfPayRegularPrice = { name, quantity -> inputView.getIntentionOfPayRegularPrice(name, quantity).stringToBoolean() }
+            getIntentionOfPromotionFreeGoods = { name ->
+                getValidatedInput(
+                    inputFunction = { inputView.getIntentionOfPromotionFreeGoods(name) },
+                    validationFunction = { InputValidator.validateYesNoInput(it) }
+                ).stringToBoolean()
+            },
+            getIntentionOfPayRegularPrice = { name, quantity ->
+                getValidatedInput(
+                    inputFunction = { inputView.getIntentionOfPayRegularPrice(name, quantity) },
+                    validationFunction = { InputValidator.validateYesNoInput(it) }
+                ).stringToBoolean()
+            }
         )
         receiptMachine.makeItemReceipt(inventory, shoppingCart.items)
     }
 
     private fun showResult() {
-        val intentionOfMembershipDiscount = inputView.getIntentionOfMembershipDiscount().stringToBoolean()
+        val intentionOfMembershipDiscount = getValidatedInput(
+            inputFunction = { inputView.getIntentionOfMembershipDiscount() },
+            validationFunction = { InputValidator.validateYesNoInput(it) }
+        ).stringToBoolean()
         receiptMachine.updateReceiptToFinal(intentionOfMembershipDiscount, inventory, shoppingCart)
         outputView.showReceipt(receiptMachine.receipt, receiptMachine.itemReceipt)
     }
 
     private fun endOrContinue() {
-        val intentionOfContinueShopping = inputView.getIntentionOfContinueShopping().stringToBoolean()
+        val intentionOfContinueShopping = getValidatedInput(
+            inputFunction = { inputView.getIntentionOfContinueShopping() },
+            validationFunction = { InputValidator.validateYesNoInput(it) }
+        ).stringToBoolean()
         if (intentionOfContinueShopping) run()
         inputView.close()
     }
 
     private fun String.stringToBoolean(): Boolean {
-        if (this == "Y") {
+        if (this.lowercase() == "y") {
             return true
-        } else if (this == "N") {
+        } else if (this.lowercase() == "n") {
             return false
         }
 
         return false
+    }
+
+    private fun getValidatedInput(
+        inputFunction: () -> String,
+        validationFunction: (String) -> Unit
+    ): String {
+        while (true) {
+            try {
+                val input = inputFunction()
+                validationFunction(input)
+                return input
+            } catch (e: IllegalArgumentException) {
+                outputView.showErrorMessage(e.message)
+            }
+        }
     }
 }

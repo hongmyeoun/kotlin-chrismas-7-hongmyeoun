@@ -38,4 +38,8 @@ class OutputView {
         println("멤버십할인                      %,6d".format(-totalAmount.membershipDiscount))
         println("내실돈                         %,6d".format(totalAmount.finalAmount))
     }
+
+    fun showErrorMessage(errorMessage: String?) {
+        println(errorMessage)
+    }
 }
