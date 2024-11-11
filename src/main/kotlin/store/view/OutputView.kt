@@ -1,7 +1,7 @@
 package store.view
 
-import store.controller.ItemReceipt
-import store.controller.TotalAmountReceipt
+import store.model.ItemReceipt
+import store.model.TotalAmountReceipt
 
 class OutputView {
     fun showGreeting(inventories: List<String>) {
@@ -24,7 +24,7 @@ class OutputView {
     }
 
     private fun nameQuantityPrice(item: ItemReceipt) {
-        println("${item.name}              ${item.quantity}        ${item.price}")
+        println("${item.name}              ${item.quantity}        ${item.totalPrice}")
     }
 
     private fun finalAmount(totalAmount: TotalAmountReceipt) {

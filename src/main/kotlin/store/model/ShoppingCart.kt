@@ -26,10 +26,16 @@ class ShoppingCart(private val order: String) {
         }.toMutableList()
         return formattedItems
     }
+
+    fun updatePurchaseItem(purchaseItem: PurchaseItem, quantity: Int) {
+        items.find { it.name == purchaseItem.name }?.let {
+            it.quantity = quantity
+        }
+    }
 }
 
 data class PurchaseItem(
     val name: String,
-    val quantity: Int,
+    var quantity: Int,
     var isPromotion: Boolean = false
 )

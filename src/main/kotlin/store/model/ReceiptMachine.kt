@@ -2,6 +2,7 @@ package store.model
 
 class ReceiptMachine {
     var receipt = TotalAmountReceipt()
+    var itemReceipt: MutableList<ItemReceipt> = mutableListOf()
 
     fun calculateNoMembershipReceipt(
         totalAmount: Int,
@@ -42,12 +43,25 @@ class ReceiptMachine {
         val finalMembershipDiscount = membershipDiscount.coerceAtMost(8000)
         return finalMembershipDiscount
     }
+
+    fun makeItemReceipt(inventory: MutableList<Inventory>, items: List<PurchaseItem>) {
+        itemReceipt = items.mapNotNull { item ->
+            val matchingInventory = inventory.find { it.name == item.name }
+            matchingInventory?.let {
+                ItemReceipt(
+                    name = item.name,
+                    quantity = item.quantity,
+                    totalPrice = it.price * item.quantity
+                )
+            }
+        }.toMutableList()
+    }
 }
 
 data class ItemReceipt(
     val name: String,
     val quantity: Int,
-    val price: Int
+    val totalPrice: Int
 )
 
 data class TotalAmountReceipt(

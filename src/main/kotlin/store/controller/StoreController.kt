@@ -17,8 +17,6 @@ class StoreController(
     private var inventory: MutableList<Inventory> = inventoryManager.loadInventoryFromFile()
     private var promotions: List<Promotion> = promotionManager.loadPromotionFromFile()
 
-    private var itemReceipt: MutableList<ItemReceipt> = mutableListOf()
-
     fun run() {
         greeting()
         shopping()
@@ -41,12 +39,13 @@ class StoreController(
             getIntentionOfPromotionFreeGoods = { name -> inputView.getIntentionOfPromotionFreeGoods(name).stringToBoolean() },
             getIntentionOfPayRegularPrice = { name, quantity -> inputView.getIntentionOfPayRegularPrice(name, quantity).stringToBoolean() }
         )
+        receiptMachine.makeItemReceipt(inventory, shoppingCart.items)
     }
 
     private fun showResult() {
         val intentionOfMembershipDiscount = inputView.getIntentionOfMembershipDiscount().stringToBoolean()
         receiptMachine.updateReceiptToFinal(intentionOfMembershipDiscount, inventory, shoppingCart)
-        outputView.showReceipt(receiptMachine.receipt, itemReceipt)
+        outputView.showReceipt(receiptMachine.receipt, receiptMachine.itemReceipt)
     }
 
     private fun endOrContinue() {

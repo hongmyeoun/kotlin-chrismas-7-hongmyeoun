@@ -137,6 +137,7 @@ class TotalAmountHandler(
             promotionDiscount += freeGoods * (promotionItem?.price ?: 0)
             totalAmount += (purchaseItem.quantity + freeGoods) * (promotionItem?.price ?: 0)
             totalPurchasedQuantity += purchaseItem.quantity + freeGoods
+            shoppingCart.updatePurchaseItem(purchaseItem, purchaseItem.quantity + freeGoods)
             itemsToPromotionCheck.add(purchaseItem)
             updateInventory(promotionItem, purchaseItem.quantity + freeGoods)
         } else {
