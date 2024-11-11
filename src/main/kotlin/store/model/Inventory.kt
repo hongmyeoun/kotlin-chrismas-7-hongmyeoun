@@ -49,7 +49,7 @@ data class Inventory(
         val formattedString = buildString {
             append("- $name")
             append(" ${price}원")
-            append(" ${quantity}개")
+            if (quantity == 0) append(" 재고 없음") else append(" ${quantity}개")
             if (promotion.isNotEmpty()) append(" $promotion")
         }
         return formattedString

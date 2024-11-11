@@ -1,9 +1,6 @@
 package store.controller
 
-import store.model.Inventory
-import store.model.InventoryManager
-import store.model.Promotion
-import store.model.PromotionManager
+import store.model.*
 import store.view.InputView
 import store.view.OutputView
 
@@ -13,7 +10,8 @@ class StoreController(
     private val inventoryManager: InventoryManager = InventoryManager(),
     private val promotionManager: PromotionManager = PromotionManager()
 ) {
-    private lateinit var purchaseItems: List<PurchaseItem>
+    private lateinit var shoppingCart: ShoppingCart
+
     private var inventory: MutableList<Inventory> = inventoryManager.loadInventoryFromFile()
     private var itemReceipt: MutableList<ItemReceipt> = mutableListOf()
 
@@ -50,7 +48,8 @@ class StoreController(
         val formattedInventories = inventory.map { it.toFormattedString() }
         outputView.showGreeting(formattedInventories)
         val itemsInput = inputView.getOrder()
-        purchaseItems = formatItems(itemsInput)
+        shoppingCart = ShoppingCart(itemsInput)
+        shoppingCart.addItem()
     }
 
     private fun formatItems(input: String): List<PurchaseItem> {
@@ -74,26 +73,40 @@ class StoreController(
         var promotionDiscount = 0
         var totalPurchasedQuantity = 0
 
+        val purchaseItems = shoppingCart.items
+        val itemsToRemove = mutableListOf<PurchaseItem>()
+
         purchaseItems.forEach { purchaseItem ->
             val promotionItem = inventory.find { it.name == purchaseItem.name && it.promotion.isNotEmpty() }
             val regularItem = inventory.find { it.name == purchaseItem.name && it.promotion.isEmpty() }
             val promotion = promotions.find { it.name == (promotionItem?.promotion ?: "") }
 
-            var remainingPurchaseItem = purchaseItem.quantity
-
             if (promotion != null && promotionManager.checkIsInPromotionDate(promotion)) {
                 if (promotionItem != null) {
-                    // 콜라 4개 -> 2*3 = 6개
-                    val promotableQuantity = (purchaseItem.quantity / promotion.buy) * (promotion.buy + promotion.get)
+
+                    val freeGoods = purchaseItem.quantity / promotion.buy
+                    val promotableQuantity = freeGoods * (promotion.buy + promotion.get)
+
                     // 프로모션 재고가 남아서 판매 가능 할 때
-                    // 10개, 4개를 입력 -> 2개를 무료로 더 받을 수 있습니다를 출력
-                    // 6개를 입력 -> 3개를 무료로 더 받을 수 있습니다를 출력
                     if (promotableQuantity <= promotionItem.quantity) {
-                        val freeGoods = purchaseItem.quantity / promotion.buy
-                        val isFreeGoodsNotion = (purchaseItem.quantity + freeGoods) <= promotionItem.quantity
-                        if (isFreeGoodsNotion) {
-                            val intentionInput = inputView.getIntentionOfPromotionFreeGoods(purchaseItem.name, freeGoods)
-                            val intention = intentionInput.stringToBoolean()
+
+                        // 최소 시작만 확인, 즉 1+1인데 3개부터는 알림 X 이미 혜택을 받음
+                        val isNPlusOne = purchaseItem.quantity != promotion.buy
+                        if (isNPlusOne) {
+                            // 프로모션으로 할인된 가격
+                            promotionDiscount = promotionDiscount + freeGoods * promotionItem.price
+
+                            // 총 구매액
+                            totalAmount = totalAmount + purchaseItem.quantity * promotionItem.price
+
+                            // 총 수량
+                            totalPurchasedQuantity = totalPurchasedQuantity + purchaseItem.quantity
+
+                            // 재고 관리
+                            val remainingQuantity = promotionItem.quantity - purchaseItem.quantity
+                            inventoryManager.updateInventory(inventory, promotionItem, remainingQuantity)
+                        } else {
+                            val intention = inputView.getIntentionOfPromotionFreeGoods(purchaseItem.name).stringToBoolean()
                             if (intention) {
                                 // 프로모션으로 할인된 가격
                                 promotionDiscount = promotionDiscount + freeGoods * promotionItem.price
@@ -104,11 +117,8 @@ class StoreController(
                                 // 총 수량
                                 totalPurchasedQuantity = totalPurchasedQuantity + purchaseItem.quantity + freeGoods
 
-                                // 남는 내 구매 상품
-                                remainingPurchaseItem = remainingPurchaseItem - promotableQuantity
-
                                 // 재고 관리
-                                val remainingQuantity = promotionItem.quantity - promotableQuantity
+                                val remainingQuantity = promotionItem.quantity - (purchaseItem.quantity + freeGoods)
                                 inventoryManager.updateInventory(inventory, promotionItem, remainingQuantity)
                             } else {
                                 regularItem?.let {
@@ -118,9 +128,6 @@ class StoreController(
                                     // 총 수량
                                     totalPurchasedQuantity = totalPurchasedQuantity + purchaseItem.quantity
 
-                                    // 남는 내 구매 상품
-                                    remainingPurchaseItem = remainingPurchaseItem - purchaseItem.quantity
-
                                     // 재고 관리
                                     val remainingQuantity = regularItem.quantity - purchaseItem.quantity
                                     inventoryManager.updateInventory(inventory, regularItem, remainingQuantity)
@@ -128,10 +135,48 @@ class StoreController(
                             }
                         }
                     }
+
+                    // 프로모션 재고가 부족해 일부 수량을 혜택 없이 결제해야 하는 경우
+                    // 콜라 11 -> 프로모션 재고는 10이므로 재고 부족, 최대 6 + 3 혜택,
+                    // 나머지 2개는 혜택 없이 결제
+                    // 대신 문제에서 보여준 결과는 더이상 프로모션 혜택이 없을때 프로모션 재고를 다 털어버림(이 경우)
+                    if (promotableQuantity > promotionItem.quantity) {
+                        // 콜라 10 -> 10 * 2 / 3 = 6
+                        // 콜라 7 -> 7 * 2 / 3 = 4
+                        val maxPromotableQuantity = (promotionItem.quantity * promotion.buy) / (promotion.buy + promotion.get)
+                        val maxFreeGoods = maxPromotableQuantity / promotion.buy
+                        // 콜라 7,10 -> 10 - ((7*2/3) - 2) =
+                        val remainingPurchaseQuantity = purchaseItem.quantity - (maxPromotableQuantity + maxFreeGoods)
+                        val intention = inputView.getIntentionOfPayRegularPrice(purchaseItem.name, remainingPurchaseQuantity).stringToBoolean()
+
+                        if (intention) {
+                            // 프로모션으로 할인된 가격
+                            promotionDiscount = promotionDiscount + maxFreeGoods * promotionItem.price
+
+                            // 총 구매액
+                            totalAmount = totalAmount + purchaseItem.quantity * promotionItem.price
+
+                            // 총 수량
+                            totalPurchasedQuantity = totalPurchasedQuantity + purchaseItem.quantity
+
+                            // 재고 관리
+                            var remainingPromotionQuantity = promotionItem.quantity - (maxPromotableQuantity + maxFreeGoods)
+                            regularItem?.let {
+                                val remainingRegularQuantity =
+                                    regularItem.quantity - remainingPurchaseQuantity + remainingPromotionQuantity
+                                inventoryManager.updateInventory(inventory, regularItem, remainingRegularQuantity)
+                                remainingPromotionQuantity = 0 // 프로모션 재고 다 턺
+                            }
+                            inventoryManager.updateInventory(inventory, promotionItem, remainingPromotionQuantity)
+                        } else {
+                            itemsToRemove.add(purchaseItem)
+                        }
+                    }
                 }
             }
         }
 
+        itemsToRemove.forEach { shoppingCart.removeItem(it) }
 
         val finalAmount = totalAmount - promotionDiscount
 
@@ -157,11 +202,6 @@ class StoreController(
     }
 
 }
-
-data class PurchaseItem(
-    val name: String,
-    val quantity: Int
-)
 
 data class ItemReceipt(
     val name: String,
