@@ -48,7 +48,7 @@ data class Inventory(
     fun toFormattedString(): String {
         val formattedString = buildString {
             append("- $name")
-            append(" ${price}원")
+            append(" %,d원".format(price))
             if (quantity == 0) append(" 재고 없음") else append(" ${quantity}개")
             if (promotion.isNotEmpty()) append(" $promotion")
         }
