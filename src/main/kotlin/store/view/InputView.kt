@@ -17,7 +17,7 @@ class InputView {
     }
 
     fun getIntentionOfPromotionFreeGoods(name: String): String {
-        val intentionOfPromotionFreeGoods = getInput(PROMOTION_FREE_GOODS_NOTION.format(name, quantity))
+        val intentionOfPromotionFreeGoods = getInput(PROMOTION_FREE_GOODS_NOTION.format(name))
         return intentionOfPromotionFreeGoods
     }
 
