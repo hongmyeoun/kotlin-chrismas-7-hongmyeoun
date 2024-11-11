@@ -18,24 +18,24 @@ class OutputView {
         println("==============W 편의점================")
         println("상품명              수량        금액")
         itemReceipt.forEach { nameQuantityPrice(it) }
-        println("=============증     정===============")
+        println("=============증    정===============")
         itemReceipt.forEach { if (it.freeGoodsQuantity > 0) promotionItems(it) }
         println("====================================")
         finalAmount(totalAmount)
     }
 
     private fun nameQuantityPrice(item: ItemReceipt) {
-        println("${item.name}              ${item.quantity}        ${item.totalPrice}")
+        println("%-17s %-9d %,6d".format(item.name, item.quantity, item.totalPrice))
     }
 
     private fun promotionItems(item: ItemReceipt) {
-        println("${item.name}        ${item.freeGoodsQuantity}")
+        println("%-17s %-12d".format(item.name, item.freeGoodsQuantity))
     }
 
     private fun finalAmount(totalAmount: TotalAmountReceipt) {
-        println("총구매액              ${totalAmount.quantity}        ${totalAmount.totalAmount}")
-        println("행사할인                ${totalAmount.promotionDiscount}")
-        println("멤버십할인                ${totalAmount.membershipDiscount}")
-        println("내실돈                ${totalAmount.finalAmount}")
+        println("총구매액            %-11d %,6d".format(totalAmount.quantity, totalAmount.totalAmount))
+        println("행사할인                        %,6d".format(-totalAmount.promotionDiscount))
+        println("멤버십할인                      %,6d".format(-totalAmount.membershipDiscount))
+        println("내실돈                         %,6d".format(totalAmount.finalAmount))
     }
 }
